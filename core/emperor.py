@@ -1,9 +1,8 @@
 from __future__ import annotations
-from abc import ABC
 from typing import List, Optional, Tuple, Dict
 
-# from persona import Primarch
-# import persona
+from person.persona import *
+from utils.enums import PlanetType, decimal_to_roman
 
 class SingletonError(Exception):
     pass
@@ -68,6 +67,7 @@ class Emperor:
 
         new_primarch = Primarch(nombre, alias)
         self.__imperium.add_primarch(new_primarch)
+        new_primarch.planet = new_planet
         print(f'The Emperor created Primarch {nombre}')
         return True
     
@@ -105,6 +105,10 @@ class Imperium:
     def primarchs(self) -> List['Primarch']:
         return self.__primarchs
     
+    @property
+    def planet(self) -> 'Planet':
+        return self.__planet
+    
     def add_segmentum(self, segmentum) -> bool:
         self.__segmentums.append(segmentum)
         print(f'Added Segmentum {segmentum.name} to the Imperium')
@@ -113,11 +117,11 @@ class Imperium:
     def add_primarch(self, value) -> bool:
         self.__primarchs.append(value)
         return True
-    # Bureaucrat('Imperial Bureaucrat', 'Departmento Munitorum', planets_info['terra'])
+
     def add_bureaucrat(self, bureaucrat: 'Bureaucrat'):
         self.__administratum.add_planet_registry(0)
         self.__administratum.add_bureaucrat(bureaucrat)
-        print(f'Imperial Bureaucrat 000013 started to work at Imperium')
+        print(f'{bureaucrat.name} started to work at Imperium')
         return True
     
     def register_planet(self, bureaucrat: 'Bureaucrat', info) -> bool:
@@ -169,116 +173,91 @@ class Imperium:
     def add_regiment(self, name, planet: str):
         new_regiment = Regiment(name, planet)
         self.__astra_militarum.regiments.append(new_regiment)
-        print(f'Created {new_regiment.name} of Astra Militarum')
+        print(f'Created Regiment {new_regiment.name} of Astra Militarum')
         return True
     
     def get_regiment(self, index):
         return self.__astra_militarum.regiments[index]
-        
-    def bureaucrat_max_registry(self):
-        index = self.__administratum.planet_registry.index(max(self.__administratum.planet_registry))
-        return self.__administratum.bureaucrats
+    
+    def bureaucrat_max_registry(self) -> List:
+        result = []
+        r_max = 0
+        index_max = 0
+        c = 0
+        for r in self.__administratum.planet_registry: 
+            if r >= r_max:
+                r_max = r
+                index_max = c
+            c += 1
+
+        result.append(self.__administratum.bureaucrats[index_max])
+        result.append(self.__administratum.planet_registry[index_max])
+        return result
     
     def planet_type_quantity(self):
+        result = {
+            PlanetType.AGRI : 0,
+            PlanetType.CIVILISED : 0,
+            PlanetType.DAEMON : 0,
+            PlanetType.DEAD : 0,
+            PlanetType.DEATH : 0,
+            PlanetType.FERAL : 0,
+            PlanetType.FEUDAL : 0,
+            PlanetType.FORGE : 0,
+            PlanetType.FRONTIER : 0,
+            PlanetType.HIVE : 0,
+        }
         for s in self.__segmentums:
             for p in s.planets:
-                break
-        print('''---------- Planet Type ----------
-            - Agri Planet Quantity = 2
-            - Civilised Planet Quantity = 5
-            - Daemon Planet Quantity = 1
-            - Dead Planet Quantity = 1
-            - Death Planet Quantity = 6
-            - Feral Planet Quantity = 2
-            - Feudal Planet Quantity = 3
-            - Forge Planet Quantity = 1
-            - Frointer Planet Quantity = 2
-            - Hive Planet Quantity = 3''')
+                for key, value in result.items():
+                    if p.type_ == key:
+                        result[key] = value + 1
+        print(result)
+
+        print(
+f'''---------- Planet Type ----------
+- Agri Planet Quantity = {result[PlanetType.AGRI]}
+- Civilised Planet Quantity = {result[PlanetType.CIVILISED ]}
+- Daemon Planet Quantity = {result[PlanetType.DAEMON]}
+- Dead Planet Quantity = {result[PlanetType.DEAD]}
+- Death Planet Quantity = {result[PlanetType.DEATH]}
+- Feral Planet Quantity = {result[PlanetType.FERAL]}
+- Feudal Planet Quantity = {result[PlanetType.FEUDAL]}
+- Forge Planet Quantity = {result[PlanetType.FORGE]}
+- Frointer Planet Quantity = {result[PlanetType.FRONTIER]}
+- Hive Planet Quantity = {result[PlanetType.HIVE]}'''
+        )
         return
     
     def show_primarchs_summary(self):
-        c = 0
-        # for i in self.__primarchs:
-            # print('- Primarch ', 'I'*(c))
-        print('''---------- Primarchs Summary ----------
-- Primarch I
-  - ID: 000000
-  - Name: Lion El Jonson
-  - Alias: The Lion
-  - Loyal: True
-  - Status: Alive
-  - Planet: Caliban
-    - Astra Militarum Regiments Quantity: 0
-    - Astra Militarum Total Soldiers: 0
-    - Adeptus Astates Chapter: Dark Angels
+        total_soldiers = 0
+        print('---------- Primarchs Summary ----------')
+        c = 1
+        for pm in self.__primarchs:
+            print('- Primarch', decimal_to_roman(c))
+            if pm == None:
+                print('  - Purged from Imperial Registry')
+                print()
+                c += 1
+                continue          
+            for r in self.__astra_militarum.regiments:
+                total_soldiers += len(r.soldiers)
+            print(f'''- ID: {pm.id_string}
+  - Name: {pm.name[:-7]}
+  - Alias: {pm.alias}
+  - Loyal: {pm.loyalty}
+  - Status: {pm.status}
+  - Planet: {pm.planet.name}
+    - Astra Militarum Regiments Quantity: {len(self.__astra_militarum.regiments)}
+    - Astra Militarum Total Soldiers: {total_soldiers}
+    - Adeptus Astates Chapter: {self.__adeptus_astartes.chapters[-1].name}
       - Successor Chapters:
-
-- Primarch II
-  - Purged from Imperial Registry
-
-- Primarch III
-  - ID: 000001
-  - Name: Fulgrim
-  - Alias: The Phoenician
-  - Loyal: False
-  - Status: Alive
-  - Planet: Chemos
-    - Astra Militarum Regiments Quantity: 0
-    - Astra Militarum Total Soldiers: 0
-    - Adeptus Astates Chapter: Emperor Children
-      - Successor Chapters:
-        ''')         
+            ''')
+            c += 1      
         return
 
-# ____________________________
 
-class Person(ABC):
-    def __init__(self, name) -> None:
-        self._id_string: str = ''
-        self._name: str = name
-        self._planet: 'Planet' = None
-
-    @property
-    def name(self):
-        return self._name
-
-# Bureaucrat('Imperial Bureaucrat', 'Departmento Munitorum', planets_info['terra'])
-class Bureaucrat(Person):
-    def __init__(self, name, deparment, planet_info) -> None:
-        super().__init__(name)
-        self.__department: str = deparment
-        # self._planet: Planet = Planet(planet_info['planet_name'], planet_info['planet_type'])
-
-class Soldier(Person):
-    def __init__(self, name, age, planet_info) -> None:
-        super().__init__(name)
-        self.__age: int = 0
-        
-class Astarte(Person):
-    def __init__(self, name, founding, planet_info) -> None:
-        super().__init__(name)
-        self.__founding: int = founding
-
-class Primarch(Person):
-    def __init__(self, name, alias) -> None:
-        super().__init__(name)
-        self.__alias: str = alias
-        self.__loyalty: bool = None
-        self.__status: str = ''
-        self.__imperium: 'Imperium' = None
-
-    def betray(self) -> bool:
-        self.__loyalty = False
-        print(f'Primarch {self._name} betrays the Emperor')
-        return True
-    
-    def change_status(self, status) -> bool:
-        self.__status = status
-        return True
-
-# _________________________________
-
-class Segmentum():
+class Segmentum:
     def __init__(self, name, location) -> None:
         self.__name: str = name
         self.__location: str = location
@@ -298,7 +277,7 @@ class Segmentum():
         print(f'Added Planet {planet.name} to Segmentum {self.name}')
         return True
 
-class Planet():
+class Planet:
     def __init__(self, name, type) -> None:
         self.__name: str = name
         self.__type_: str = type
@@ -308,6 +287,10 @@ class Planet():
     @property
     def name(self):
         return self.__name
+    
+    @property
+    def type_(self):
+        return self.__type_
     
     @property
     def chapter(self):
@@ -334,9 +317,7 @@ class Regiment:
     
     def add_soldier(self, soldier: 'Soldier') -> bool:
         self.__soldiers.append(soldier)
-        return True
-    
-
+        return True    
 
 class Chapter:
     def __init__(self, name, primarch, planet) -> None:
@@ -367,8 +348,6 @@ class Chapter:
             print('RuntimeError: There can only be 1000 Astartes per Chapter')
             return False
         return True
-
-# _____________________________________________________
 
 class Administratum:
     def __init__(self) -> None:
@@ -406,4 +385,3 @@ class AdeptusAstartes:
     @property
     def chapters(self):
         return self.__chapters
-    
