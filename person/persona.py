@@ -15,19 +15,19 @@ class Person(ABC):
         Person.ID += 1
 
     @property
-    def id_string(self):
+    def id_string(self) -> str:
         return self._id_string
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
     
     @property
-    def planet(self):
+    def planet(self) -> 'Planet':
         return self._planet
     
     @planet.setter
-    def planet(self, value) -> bool:
+    def planet(self, value: 'Planet') -> bool:
         self._planet = value
         return True
     
@@ -35,7 +35,7 @@ class Bureaucrat(Person):
     def __init__(self, name, deparment, planet_info) -> None:
         super().__init__(name)
         self.__department: str = deparment
-        # self._planet: Planet = Planet(planet_info['planet_name'], planet_info['planet_type'])
+        Person.ID += 1
 
 class Soldier(Person):
     def __init__(self, name, age, planet_info) -> None:
@@ -56,15 +56,15 @@ class Primarch(Person):
         self.__imperium: 'Imperium' = None
 
     @property
-    def alias(self):
+    def alias(self) -> str:
         return self.__alias
     
     @property
-    def loyalty(self):
+    def loyalty(self) -> bool:
         return self.__loyalty
 
     @property
-    def status(self):
+    def status(self) -> str:
         return self.__status
 
     def betray(self) -> bool:
